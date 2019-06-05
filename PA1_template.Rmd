@@ -5,21 +5,77 @@ output:
     keep_md: true
 ---
 
+I am going to need tidyverse so just loading that up here.
+
+```{r, warning=FALSE, results='hide'}
+library(tidyverse)
+```
 
 ## Loading and preprocessing the data
 
+The problem states
 
+>The variables included in this dataset are:<br>
+>steps: Number of steps taking in a 5-minute interval (missing values are coded as NA)<br>
+>date: The date on which the measurement was taken in YYYY-MM-DD format<br>
+>interval: Identifier for the 5-minute interval in which measurement was taken<br>
+>The dataset is stored in a comma-separated-value (CSV) file and there are a total of 17,568 >observations in this dataset.
+
+```{r}
+activity = read.csv('activity/activity.csv')
+head(activity)
+summary(activity)
+```
+
+Looks sort of right. The steps are 0 a lot. Perhaps people are sleeping?
 
 ## What is mean total number of steps taken per day?
 
+```{r}
+all_daily_mean_steps = summarize(group_by(activity, date), mean_steps=mean(steps))
+all_daily_mean_steps
+```
+
+Those NAs are making me nervous, so let's drop them:
+```{r}
+activity_lite = drop_na(activity)
+daily_mean_steps = summarize(group_by(activity_lite, date), daily_mean_steps=mean(steps))
+daily_mean_steps
+```
+
+That looks better, so now I can just look at the average
+
+```{r}
+mean(daily_mean_steps$daily_mean_steps)
+```
 
 
 ## What is the average daily activity pattern?
 
+We already have this so let's just look at it.
+
+```{r}
+plot(daily_mean_steps)
+```
 
 
 ## Imputing missing values
 
+We could replace each value by the mean of the steps, but we actually have the mean of the steps by _day_
+We might as well use that information to replace each NA with the daily mean. 
+Sometimes we don't have any steps for a day -- which is why we dropped them in the first place.
+Those days can be replaced by the mean for all steps.
 
+So to recap this will be a two step process:
+
+* replace the NA within a day by the daily average.
+
+* replace all remaining NAs (belonging to days with no readings) with the average steps for a day
+
+We go back to the original:
+
+```{r}
+all_daily_mean_steps
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
