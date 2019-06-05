@@ -41,12 +41,18 @@ The problem states
 
 
 ```r
-activity = read.csv('activity/activity.csv')
+activity = read_csv('activity/activity.csv', col_types = cols(
+  steps = col_double(),
+  date = col_date(),
+  interval = col_integer()
+))
 head(activity)
 ```
 
 ```
-##   steps       date interval
+## # A tibble: 6 x 3
+##   steps date       interval
+##   <dbl> <date>        <int>
 ## 1    NA 2012-10-01        0
 ## 2    NA 2012-10-01        5
 ## 3    NA 2012-10-01       10
@@ -60,14 +66,14 @@ summary(activity)
 ```
 
 ```
-##      steps                date          interval     
-##  Min.   :  0.00   2012-10-01:  288   Min.   :   0.0  
-##  1st Qu.:  0.00   2012-10-02:  288   1st Qu.: 588.8  
-##  Median :  0.00   2012-10-03:  288   Median :1177.5  
-##  Mean   : 37.38   2012-10-04:  288   Mean   :1177.5  
-##  3rd Qu.: 12.00   2012-10-05:  288   3rd Qu.:1766.2  
-##  Max.   :806.00   2012-10-06:  288   Max.   :2355.0  
-##  NA's   :2304     (Other)   :15840
+##      steps             date               interval     
+##  Min.   :  0.00   Min.   :2012-10-01   Min.   :   0.0  
+##  1st Qu.:  0.00   1st Qu.:2012-10-16   1st Qu.: 588.8  
+##  Median :  0.00   Median :2012-10-31   Median :1177.5  
+##  Mean   : 37.38   Mean   :2012-10-31   Mean   :1177.5  
+##  3rd Qu.: 12.00   3rd Qu.:2012-11-15   3rd Qu.:1766.2  
+##  Max.   :806.00   Max.   :2012-11-30   Max.   :2355.0  
+##  NA's   :2304
 ```
 
 Looks sort of right. The steps are 0 a lot. Perhaps people are sleeping?
@@ -83,7 +89,7 @@ all_daily_mean_steps
 ```
 ## # A tibble: 61 x 2
 ##    date       mean_steps
-##    <fct>           <dbl>
+##    <date>          <dbl>
 ##  1 2012-10-01     NA    
 ##  2 2012-10-02      0.438
 ##  3 2012-10-03     39.4  
@@ -108,7 +114,7 @@ daily_mean_steps
 ```
 ## # A tibble: 53 x 2
 ##    date       daily_mean_steps
-##    <fct>                 <dbl>
+##    <date>                <dbl>
 ##  1 2012-10-02            0.438
 ##  2 2012-10-03           39.4  
 ##  3 2012-10-04           42.1  
@@ -140,27 +146,108 @@ We already have this so let's just look at it.
 
 
 ```r
-plot(daily_mean_steps)
+plot(daily_mean_steps, type="l")
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
+No, the question asked for steps over the time of day over all days.
+
+
+```r
+interval_mean_steps = summarize(group_by(activity_lite, interval), interval_mean_steps=mean(steps))
+interval_mean_steps
+```
+
+```
+## # A tibble: 288 x 2
+##    interval interval_mean_steps
+##       <int>               <dbl>
+##  1        0              1.72  
+##  2        5              0.340 
+##  3       10              0.132 
+##  4       15              0.151 
+##  5       20              0.0755
+##  6       25              2.09  
+##  7       30              0.528 
+##  8       35              0.868 
+##  9       40              0     
+## 10       45              1.47  
+## # ... with 278 more rows
+```
+
+```r
+plot(interval_mean_steps, type="l")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+Yikes, expected that to be a lot smoother.
+However, the quiet time while the user sleeps and then that commute/run in the morning makes sense.
 
 ## Imputing missing values
 
-We could replace each value by the mean of the steps, but we actually have the mean of the steps by _day_
-We might as well use that information to replace each NA with the daily mean. 
-Sometimes we don't have any steps for a day -- which is why we dropped them in the first place.
-Those days can be replaced by the mean for all steps.
-
-So to recap this will be a two step process:
-
-* replace the NA within a day by the daily average.
-
-* replace all remaining NAs (belonging to days with no readings) with the average steps for a day
-
-We go back to the original:
+We could replace the steps by the average for the day or the interval.
+I can imagine that the interval is more important (you sleep at midnight whether or not you took a hike earlier)
+Or we can just use the local information before and after to do a fill.
+The problem with the local information is that it can change pretty sharply, so if most of the NAs are at night, and it stopped collecting during a walk, we don't want it to show the person walking all night.
 
 
+
+```r
+a = left_join(activity, interval_mean_steps, by = "interval")
+a$steps[is.na(a$steps)] <- a$interval_mean_steps[is.na(a$steps)]
+```
+
+The original steps had a mean and median of:
+
+
+```r
+mean(activity_lite$steps)
+```
+
+```
+## [1] 37.3826
+```
+
+```r
+median(activity_lite$steps)
+```
+
+```
+## [1] 0
+```
+And the modified one has a mean and median of:
+
+```r
+mean(a$steps)
+```
+
+```
+## [1] 37.3826
+```
+
+```r
+median(a$steps)
+```
+
+```
+## [1] 0
+```
+
+
+
+
+```r
+hist(a$steps)
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
+```r
+hist(activity$steps)
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
 
 ## Are there differences in activity patterns between weekdays and weekends?

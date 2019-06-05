@@ -22,7 +22,11 @@ The problem states
 >The dataset is stored in a comma-separated-value (CSV) file and there are a total of 17,568 >observations in this dataset.
 
 ```{r}
-activity = read.csv('activity/activity.csv')
+activity = read_csv('activity/activity.csv', col_types = cols(
+  steps = col_double(),
+  date = col_date(),
+  interval = col_integer()
+))
 head(activity)
 summary(activity)
 ```
@@ -55,27 +59,50 @@ mean(daily_mean_steps$daily_mean_steps)
 We already have this so let's just look at it.
 
 ```{r}
-plot(daily_mean_steps)
+plot(daily_mean_steps, type="l")
 ```
 
+No, the question asked for steps over the time of day over all days.
+
+```{r}
+interval_mean_steps = summarize(group_by(activity_lite, interval), interval_mean_steps=mean(steps))
+interval_mean_steps
+plot(interval_mean_steps, type="l")
+```
+
+Yikes, expected that to be a lot smoother.
+However, the quiet time while the user sleeps and then that commute/run in the morning makes sense.
 
 ## Imputing missing values
 
-We could replace each value by the mean of the steps, but we actually have the mean of the steps by _day_
-We might as well use that information to replace each NA with the daily mean. 
-Sometimes we don't have any steps for a day -- which is why we dropped them in the first place.
-Those days can be replaced by the mean for all steps.
+We could replace the steps by the average for the day or the interval.
+I can imagine that the interval is more important (you sleep at midnight whether or not you took a hike earlier)
+Or we can just use the local information before and after to do a fill.
+The problem with the local information is that it can change pretty sharply, so if most of the NAs are at night, and it stopped collecting during a walk, we don't want it to show the person walking all night.
 
-So to recap this will be a two step process:
-
-* replace the NA within a day by the daily average.
-
-* replace all remaining NAs (belonging to days with no readings) with the average steps for a day
-
-We go back to the original:
 
 ```{r}
-all_daily_mean_steps
+a = left_join(activity, interval_mean_steps, by = "interval")
+a$steps[is.na(a$steps)] <- a$interval_mean_steps[is.na(a$steps)]
+```
+
+The original steps had a mean and median of:
+
+```{r}
+mean(activity_lite$steps)
+median(activity_lite$steps)
+```
+And the modified one has a mean and median of:
+```{r}
+mean(a$steps)
+median(a$steps)
+```
+
+
+
+```{r}
+hist(a$steps)
+hist(activity$steps)
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
