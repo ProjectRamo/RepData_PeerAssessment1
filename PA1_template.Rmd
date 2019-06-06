@@ -101,8 +101,33 @@ median(a$steps)
 
 
 ```{r}
-hist(a$steps)
-hist(activity$steps)
+daily_mean_imputed_steps = summarize(group_by(a, date), daily_mean_imputed_steps=mean(steps))
+hist(daily_mean_imputed_steps$daily_mean_imputed_steps)
+hist(daily_mean_steps$daily_mean_steps)
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Create the weekday:
+
+```{r}
+activity_lite$weekday = weekdays(activity_lite$date)
+activity_lite
+```
+
+Create the weekend:
+
+```{r}
+activity_lite$weekend[grepl("Saturday|Sunday", activity_lite$weekday)]= ("Weekend")
+activity_lite$weekend[!grepl("Saturday|Sunday", activity_lite$weekday)]=("Weekday")
+activity_lite$weekend <- as.factor(activity_lite$weekend)
+activity_lite
+```
+
+
+
+```{r}
+interval_mean_steps_w = summarize(group_by(activity_lite, interval, weekend), interval_mean_steps=mean(steps))
+plot(interval_mean_steps_w$interval_mean_steps[interval_mean_steps_w$weekend=="Weekend"], type="l")
+plot(interval_mean_steps_w$interval_mean_steps[interval_mean_steps_w$weekend=="Weekday"], type="l")
+```

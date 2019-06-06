@@ -239,15 +239,91 @@ median(a$steps)
 
 
 ```r
-hist(a$steps)
+daily_mean_imputed_steps = summarize(group_by(a, date), daily_mean_imputed_steps=mean(steps))
+hist(daily_mean_imputed_steps$daily_mean_imputed_steps)
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ```r
-hist(activity$steps)
+hist(daily_mean_steps$daily_mean_steps)
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Create the weekday:
+
+
+```r
+activity_lite$weekday = weekdays(activity_lite$date)
+activity_lite
+```
+
+```
+## # A tibble: 15,264 x 4
+##    steps date       interval weekday
+##    <dbl> <date>        <int> <chr>  
+##  1     0 2012-10-02        0 Tuesday
+##  2     0 2012-10-02        5 Tuesday
+##  3     0 2012-10-02       10 Tuesday
+##  4     0 2012-10-02       15 Tuesday
+##  5     0 2012-10-02       20 Tuesday
+##  6     0 2012-10-02       25 Tuesday
+##  7     0 2012-10-02       30 Tuesday
+##  8     0 2012-10-02       35 Tuesday
+##  9     0 2012-10-02       40 Tuesday
+## 10     0 2012-10-02       45 Tuesday
+## # ... with 15,254 more rows
+```
+
+Create the weekend:
+
+
+```r
+activity_lite$weekend[grepl("Saturday|Sunday", activity_lite$weekday)]= ("Weekend")
+```
+
+```
+## Warning: Unknown or uninitialised column: 'weekend'.
+```
+
+```r
+activity_lite$weekend[!grepl("Saturday|Sunday", activity_lite$weekday)]=("Weekday")
+activity_lite$weekend <- as.factor(activity_lite$weekend)
+activity_lite
+```
+
+```
+## # A tibble: 15,264 x 5
+##    steps date       interval weekday weekend
+##    <dbl> <date>        <int> <chr>   <fct>  
+##  1     0 2012-10-02        0 Tuesday Weekday
+##  2     0 2012-10-02        5 Tuesday Weekday
+##  3     0 2012-10-02       10 Tuesday Weekday
+##  4     0 2012-10-02       15 Tuesday Weekday
+##  5     0 2012-10-02       20 Tuesday Weekday
+##  6     0 2012-10-02       25 Tuesday Weekday
+##  7     0 2012-10-02       30 Tuesday Weekday
+##  8     0 2012-10-02       35 Tuesday Weekday
+##  9     0 2012-10-02       40 Tuesday Weekday
+## 10     0 2012-10-02       45 Tuesday Weekday
+## # ... with 15,254 more rows
+```
+
+
+
+
+```r
+interval_mean_steps_w = summarize(group_by(activity_lite, interval, weekend), interval_mean_steps=mean(steps))
+plot(interval_mean_steps_w$interval_mean_steps[interval_mean_steps_w$weekend=="Weekend"], type="l")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+
+```r
+plot(interval_mean_steps_w$interval_mean_steps[interval_mean_steps_w$weekend=="Weekday"], type="l")
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-14-2.png)<!-- -->
