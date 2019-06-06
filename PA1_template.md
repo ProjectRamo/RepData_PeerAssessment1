@@ -128,8 +128,14 @@ daily_mean_steps
 ## # ... with 43 more rows
 ```
 
-That looks better, so now I can just look at the average
+That looks better, so now I can just look at the histogram and mean
 
+
+```r
+hist(daily_mean_steps$daily_mean_steps)
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 ```r
 mean(daily_mean_steps$daily_mean_steps)
@@ -138,6 +144,7 @@ mean(daily_mean_steps$daily_mean_steps)
 ```
 ## [1] 37.3826
 ```
+
 
 
 ## What is the average daily activity pattern?
@@ -177,13 +184,37 @@ interval_mean_steps
 ```
 
 ```r
-plot(interval_mean_steps, type="l")
+plot(interval_mean_steps, type = 'l')
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 Yikes, expected that to be a lot smoother.
 However, the quiet time while the user sleeps and then that commute/run in the morning makes sense.
+The most seps are around the 800th minute, and that would be about 800/60 = 13.33 hours after midnight.
+This is the familiar 1pm or around lunch time people walk the most when they presumably step out for lunch.
+
+Let's see if that is roughly right:
+
+```r
+max_interval = interval_mean_steps$interval[interval_mean_steps$interval_mean_steps == max(interval_mean_steps$interval_mean_steps)]
+print(max_interval)
+```
+
+```
+## [1] 835
+```
+
+```r
+print(max_interval/60)
+```
+
+```
+## [1] 13.91667
+```
+
+Clearly, people go to lunch closer to 2pm.
+
 
 ## Imputing missing values
 
@@ -235,6 +266,7 @@ median(a$steps)
 ## [1] 0
 ```
 
+But I imputed the daily mean steps for each day to the NA so the mean should not change.
 
 
 
@@ -243,13 +275,13 @@ daily_mean_imputed_steps = summarize(group_by(a, date), daily_mean_imputed_steps
 hist(daily_mean_imputed_steps$daily_mean_imputed_steps)
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 ```r
 hist(daily_mean_steps$daily_mean_steps)
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
@@ -320,10 +352,10 @@ interval_mean_steps_w = summarize(group_by(activity_lite, interval, weekend), in
 plot(interval_mean_steps_w$interval_mean_steps[interval_mean_steps_w$weekend=="Weekend"], type="l")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 ```r
 plot(interval_mean_steps_w$interval_mean_steps[interval_mean_steps_w$weekend=="Weekday"], type="l")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-14-2.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-15-2.png)<!-- -->

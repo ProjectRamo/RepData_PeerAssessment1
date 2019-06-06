@@ -47,11 +47,13 @@ daily_mean_steps = summarize(group_by(activity_lite, date), daily_mean_steps=mea
 daily_mean_steps
 ```
 
-That looks better, so now I can just look at the average
+That looks better, so now I can just look at the histogram and mean
 
 ```{r}
+hist(daily_mean_steps$daily_mean_steps)
 mean(daily_mean_steps$daily_mean_steps)
 ```
+
 
 
 ## What is the average daily activity pattern?
@@ -67,11 +69,23 @@ No, the question asked for steps over the time of day over all days.
 ```{r}
 interval_mean_steps = summarize(group_by(activity_lite, interval), interval_mean_steps=mean(steps))
 interval_mean_steps
-plot(interval_mean_steps, type="l")
+plot(interval_mean_steps, type = 'l')
 ```
 
 Yikes, expected that to be a lot smoother.
 However, the quiet time while the user sleeps and then that commute/run in the morning makes sense.
+The most seps are around the 800th minute, and that would be about 800/60 = 13.33 hours after midnight.
+This is the familiar 1pm or around lunch time people walk the most when they presumably step out for lunch.
+
+Let's see if that is roughly right:
+```{r}
+max_interval = interval_mean_steps$interval[interval_mean_steps$interval_mean_steps == max(interval_mean_steps$interval_mean_steps)]
+print(max_interval)
+print(max_interval/60)
+```
+
+Clearly, people go to lunch closer to 2pm.
+
 
 ## Imputing missing values
 
@@ -98,6 +112,7 @@ mean(a$steps)
 median(a$steps)
 ```
 
+But I imputed the daily mean steps for each day to the NA so the mean should not change.
 
 
 ```{r}
